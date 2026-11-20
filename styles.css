@@ -133,7 +133,21 @@ button.link { border: none; background: none; padding: 0; color: var(--accent); 
 
 ul.notes { margin: 8px 0; padding-left: 18px; }
 
+td .sub { display: none; }
+tr.total td[colspan] { text-align: left; }
+
+/* Phone: drop the Drift and Value columns (value moves under the ticker,
+   drift shows as an amber Current %) so Price fits without sideways scroll.
+   16px inputs stop iOS Safari zooming in on focus. */
 @media (max-width: 560px) {
-  th, td { padding: 6px 4px; }
-  input.num { width: 4.8rem; padding: 5px 6px; }
+  .card { padding: 12px 10px; }
+  th, td { padding: 6px 3px; }
+  .wide { display: none; }
+  td .sub { display: block; font-size: 0.75rem; color: var(--muted); }
+  td .tag { display: block; margin-left: 0; }
+  td.cur-off { color: var(--amber); font-weight: 600; }
+  input, select { font-size: 16px; }
+  input.num { width: 4.4rem; padding: 5px 5px; }
+  #amount { flex: 1 1 100%; }
+  .actions button { flex: 1 1 auto; }
 }

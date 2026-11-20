@@ -99,25 +99,26 @@ function holdingsTable(p, saved, px) {
   const rows = tickers.map((t) => {
     const w = targets[t] || 0;
     const cur = total > 0 ? values[t] / total : 0;
-    const drift = (cur - w) * 100;
+    const drift = Math.abs((cur - w) * 100) < 0.05 ? 0 : (cur - w) * 100;
+    const off = Math.abs(drift) >= 1;
     const priceCls = ['num', t in priceOverrides ? 'edited' : '', missing.includes(t) ? 'missing' : ''].join(' ');
     return `<tr>
-      <td>${esc(t)}${t in targets ? '' : '<span class="tag">not in target</span>'}</td>
+      <td>${esc(t)}${t in targets ? '' : '<span class="tag">not in target</span>'}<span class="sub">${fmtMoney(values[t])}</span></td>
       <td><input class="num" type="number" step="1" min="0" inputmode="numeric" data-shares="${esc(t)}" value="${saved.holdings[t] || 0}"></td>
-      <td>${pct(cur)}</td>
+      <td class="${off ? 'cur-off' : ''}">${pct(cur)}</td>
       <td>${pct(w)}</td>
-      <td class="${Math.abs(drift) >= 1 ? 'drift' : 'muted'}">${drift >= 0 ? '+' : ''}${drift.toFixed(1)}</td>
-      <td>${fmtMoney(values[t])}</td>
-      <td><input class="${priceCls}" type="number" step="0.01" min="0" inputmode="decimal" data-price="${esc(t)}" value="${px[t] ?? ''}" placeholder="price"></td>
+      <td class="wide ${off ? 'drift' : 'muted'}">${drift > 0 ? '+' : ''}${drift.toFixed(1)}</td>
+      <td class="wide">${fmtMoney(values[t])}</td>
+      <td><input class="${priceCls}" type="number" step="0.01" min="0" inputmode="decimal" data-price="${esc(t)}" value="${px[t] != null ? Number(px[t].toFixed(2)) : ''}" placeholder="price"></td>
     </tr>`;
   }).join('');
 
   return `<div class="table-scroll"><table>
-    <thead><tr><th>Fund</th><th>Shares</th><th>Current</th><th>Target</th><th>Drift (pts)</th><th>Value</th><th>Price</th></tr></thead>
+    <thead><tr><th>Fund</th><th>Shares</th><th>Current</th><th>Target</th><th class="wide">Drift (pts)</th><th class="wide">Value</th><th>Price</th></tr></thead>
     <tbody>
       ${rows || '<tr><td colspan="7" class="muted">No target and no holdings.</td></tr>'}
-      <tr><td>Cash</td><td><input class="num" type="number" step="0.01" min="0" inputmode="decimal" data-cash value="${saved.cash}"></td><td>${pct(total > 0 ? saved.cash / total : 0)}</td><td></td><td></td><td>${fmtMoney(saved.cash)}</td><td></td></tr>
-      <tr class="total"><td>Total</td><td></td><td></td><td></td><td></td><td>${fmtMoney(total)}</td><td></td></tr>
+      <tr><td>Cash</td><td><input class="num" type="number" step="0.01" min="0" inputmode="decimal" data-cash value="${saved.cash}"></td><td>${pct(total > 0 ? saved.cash / total : 0)}</td><td></td><td class="wide"></td><td class="wide">${fmtMoney(saved.cash)}</td><td></td></tr>
+      <tr class="total"><td>Total</td><td colspan="3">${fmtMoney(total)}</td><td class="wide"></td><td class="wide"></td><td></td></tr>
     </tbody>
   </table></div>
   <p class="muted small">Price, shares and cash are editable. Edited prices (highlighted) last for this visit only.</p>`;
@@ -189,7 +190,7 @@ function draw() {
         <span class="badge ${badgeClass(p)}">${esc(stateText(p))}</span>
         <span class="muted small">${data ? `Prices as of ${esc(data.price_date || 'n/a')} (close)` : ''}</span>
       </div>
-      ${saved.last_rebalanced ? `<p class="muted small">Last rebalanced ${esc(saved.last_rebalanced)}${saved.state_at_last_rebalance in STATE_LABELS ? ` in ${esc(STATE_LABELS[saved.state_at_last_rebalance])}` : ''}.</p>` : ''}
+      ${saved.last_rebalanced ? `<p class="muted small">Last rebalanced ${esc(saved.last_rebalanced)}${saved.state_at_last_rebalance in STATE_LABELS && saved.state_at_last_rebalance !== 'static' ? ` in ${esc(STATE_LABELS[saved.state_at_last_rebalance])}` : ''}.</p>` : ''}
     </section>
     ${banners(p, saved)}
     <section class="card">${holdingsTable(p, saved, px)}</section>
