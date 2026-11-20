@@ -42,3 +42,15 @@ test('applyPlan records holdings, cash, state, date', () => {
   assert.deepEqual(getPortfolio(s, 'sp_stair'),
     { holdings: { VOO: 3 }, cash: 12.35, last_rebalanced: '2026-11-20', state_at_last_rebalance: 'partial' });
 });
+
+test('getPortfolio sanitizes a malformed saved entry', () => {
+  const store = { portfolios: { haa: { holdings: null, cash: '100' }, tri: { holdings: { A: 3, B: -2, C: 'x', D: 1.5 }, cash: -4 } }, selected: 'haa' };
+  assert.deepEqual(getPortfolio(store, 'haa').holdings, {});
+  assert.equal(getPortfolio(store, 'haa').cash, 0);
+  assert.deepEqual(getPortfolio(store, 'tri').holdings, { A: 3, D: 1.5 });
+  assert.equal(getPortfolio(store, 'tri').cash, 0);
+});
+
+test('getPortfolio tolerates a non-object entry', () => {
+  assert.deepEqual(getPortfolio({ portfolios: { x: 'junk' }, selected: null }, 'x').holdings, {});
+});

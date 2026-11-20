@@ -28,13 +28,22 @@ export function saveStore(storage, store) {
   }
 }
 
+const isCount = (n) => typeof n === 'number' && Number.isFinite(n) && n >= 0;
+const isPlainObject = (o) => o !== null && typeof o === 'object' && !Array.isArray(o);
+
+// Saved entries are validated field by field, so one bad value (a hand-edited
+// or older store) can't blank the page or turn cash into string concatenation.
 export function getPortfolio(store, id) {
+  const raw = isPlainObject(store.portfolios[id]) ? store.portfolios[id] : {};
+  const holdings = {};
+  if (isPlainObject(raw.holdings)) {
+    for (const [t, n] of Object.entries(raw.holdings)) if (isCount(n)) holdings[t] = n;
+  }
   return {
-    holdings: {},
-    cash: 0,
-    last_rebalanced: null,
-    state_at_last_rebalance: null,
-    ...(store.portfolios[id] || {}),
+    holdings,
+    cash: isCount(raw.cash) ? raw.cash : 0,
+    last_rebalanced: typeof raw.last_rebalanced === 'string' ? raw.last_rebalanced : null,
+    state_at_last_rebalance: typeof raw.state_at_last_rebalance === 'string' ? raw.state_at_last_rebalance : null,
   };
 }
 
